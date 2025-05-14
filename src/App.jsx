@@ -1,7 +1,7 @@
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 import "./App.css";
 import useDebounce from "./hooks/useDebounce";
-import { useStateValue } from "./store/store";
+import { useStateValue } from "./hooks/useStateValue";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -12,11 +12,11 @@ function App() {
   const debounceValue = useDebounce(searchValue);
 
   const filteredData = data?.filter((item) =>
-    item?.title?.toLowerCase().includes(debounceValue?.toLowerCase())
+    item?.title?.toLowerCase().includes(debounceValue?.toLowerCase() ?? "")
   );
 
   const sortedData = [
-    ...filteredData?.sort((a, b) => {
+    ...(filteredData ?? []).sort((a, b) => {
       if (sortBy === "ascTitle") return a?.title > b?.title ? 1 : -1;
       if (sortBy === "descTitle") return b?.title > a?.title ? 1 : -1;
       return 0;
@@ -27,9 +27,9 @@ function App() {
     (page - 1) * ITEMS_PER_PAGE,
     page * ITEMS_PER_PAGE
   );
-  const totalPages = Math.ceil(data?.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil((data?.length ?? 0) / ITEMS_PER_PAGE);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     dispatch({ type: "SET_LOADING", payload: true });
     try {
       const res = await fetch("https://jsonplaceholder.typicode.com/posts");
@@ -40,22 +40,22 @@ function App() {
     } finally {
       dispatch({ type: "SET_LOADING", payload: false });
     }
-  };
+  }, [dispatch]);
 
   const onSearch = (e) => {
-    const value = e?.target?.value;
+    const value = e?.target?.value ?? "";
     dispatch({ type: "SET_SEARCH_VALUE", payload: value });
     dispatch({ type: "SET_PAGE", payload: 1 });
   };
 
   const onSortBy = (e) => {
-    const value = e?.target?.value;
+    const value = e?.target?.value ?? "";
     dispatch({ type: "SET_SORT_BY", payload: value });
   };
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [fetchData]);
 
   if (loading) return <div>Loading...</div>;
 
@@ -85,9 +85,9 @@ function App() {
           </tr>
         </thead>
         <tbody>
-          {listData?.map((item, _index) => (
+          {listData?.map((item, index) => (
             <tr key={item?.id}>
-              <td>{item?.id}</td>
+              <td>{(page - 1) * ITEMS_PER_PAGE + index + 1}</td>
               <td>{item?.id}</td>
               <td>{item?.title}</td>
             </tr>
@@ -107,6 +107,7 @@ function App() {
         </span>
         <button
           onClick={() => dispatch({ type: "SET_PAGE", payload: page + 1 })}
+          disabled={page === totalPages}
         >
           Next
         </button>

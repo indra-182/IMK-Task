@@ -1,6 +1,4 @@
-import { useContext, createContext, useReducer } from "react";
-
-const initialState = {
+export const initialState = {
   data: [],
   loading: false,
   page: 1,
@@ -24,13 +22,3 @@ export const reducer = (state, action) => {
       return state;
   }
 };
-
-const StateContext = createContext();
-
-export const StateProvider = ({ children }) => (
-  <StateContext.Provider value={useReducer(reducer, initialState)}>
-    {children}
-  </StateContext.Provider>
-);
-
-export const useStateValue = () => useContext(StateContext);
